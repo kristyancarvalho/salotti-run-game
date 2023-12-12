@@ -16,13 +16,16 @@
     #myModal {
       display: none;
       position: fixed;
-      top: 50%;
+      top: 40%;
       left: 50%;
       transform: translate(-50%, -50%);
       padding: 20px;
-      background-color: #fff;
-      border: 2px solid #000;
-      z-index: 1;
+      background-color: rgb(155, 37, 37);
+      color: #fff;
+      z-index: 5;
+
+      font-size: 4rem;
+      text-align: center;
     }
   </style>
 </head>
@@ -416,7 +419,7 @@
 
         if (!gameRunning) {
           displayModal(
-            'Você Perdeu! Pontos: ' +
+            'Você foi pego! Pontos:  ' +
               score +
               ', Tempo: ' +
               seconds +

@@ -10,19 +10,77 @@
     #above-all {
       height: 100vh;
       width: 100vw;
-      padding: 128px 0;
+      padding: 128px 512px;
 
       display: flex;
       align-items: center;
+      justify-content: space-around;
       flex-direction: column;
+
+      background-color: rgb(19, 19, 83);
     }
     h1 {
       font-size: 4rem;
+      margin: 64px 0;
+
+      background-color: gold;
+      padding: 8px 32px;
+
+      transition: .2s;
+    }
+
+    h1 a {
+      color: #fff;
+      text-decoration: none;
+    }
+
+    h1:hover {
+      transform: scale(1.5);
     }
 
     span {
       font-weight: bold;
       font-size: 2rem;
+
+      color: gold;
+    }
+
+    p {
+      font-size: large;
+      font-weight: 600;
+      color: aliceblue;
+    }
+
+    section {
+      text-align: center;
+    }
+
+    #keyset {
+      text-align: center;
+      width: 256px;
+    }
+
+    #list-section {
+      text-align: left;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    li {
+      color: #fff;
+      list-style: none;
+    }
+
+    #footer {
+      margin: 64px 0;
+
+      text-align: center;
+    }
+
+    #footer a {
+      color: #fff;
     }
   </style>
     <div id="above-all">
@@ -30,6 +88,9 @@
 
       <section id="about">
         <span>Sobre</span>
+        <p>
+          Você é um aluno da escola Alberto Salotti que chegou sem uniforme e foi flagrado pela coordenadora. Agora você tem que correr para não levar suspensão! Neste jogo de corrida infinita, você deve fugir da coordenadora pela escola, desviando de obstáculos e quanto mais obstáculos pulados, mais pontos.
+        </p>
       </section>
 
         <h1>
@@ -38,17 +99,37 @@
 
         <section id="keyset">
           <span>Controles</span>
+          
+          <div id="list-section">
+            <ul>
+              <li><b>W</b> pulo</li>
+              <li><b>A</b> esquerda</li>
+              <li><b>D</b> direita</li>
+            </ul>
+            <ul>
+              <li><b>↑</b> pulo</li>
+              <li><b>←</b> esquerda</li>
+              <li><b>→</b> direita</li>
+            </ul>
+          </div>
         </section>
 
         <footer id="footer">
           <span>Desenvolvido por:</span>
           <ul>
+
             <li>
-              <a href="https://github.com/kristyancarvalho">Kristyan Carvalho</a>
+              <b><a href="https://github.com/kristyancarvalho">Kristyan Carvalho</a></b> (github)
             </li>
-            <li>Ricardo Batista</li>
-            <li>Enzo Lourenço</li>
-            <li>Christian Moreira</li>
+            <li>
+              <b>Ricardo Batista</b>
+            </li>
+            <li>
+              <b>Enzo Lourenço</b>
+            </li>
+            <li>
+              <b>Christian Moreira</b>
+            </li>
           </ul>
         </footer>
     </div>
