@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Salotti Run</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="global.css">
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+    }
+    #myModal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px;
+      background-color: #fff;
+      border: 2px solid #000;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div id="myModal">
+    <p id="modalText"></p>
+    <p>Pressione F5 para reiniciar</p>
+  </div>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+      });
+    }
+
+    async function loadImages() {
+      return Promise.all([
+        loadImage('background.png'),
+        loadImage('background-2.png'),
+        loadImage('jogador.png'),
+        loadImage('jogador2.png'),
+        loadImage('meire.png'),
+        loadImage('meire2.png'),
+        loadImage('mesa.png')
+      ]);
+    }
+
+    async function startGame() {
+      const [
+        backgroundImage1,
+        backgroundImage2,
+        playerImage1,
+        playerImage2,
+        chaserEnemyImage1,
+        chaserEnemyImage2,
+        obstacleImage
+      ] = await loadImages();
+
+        const player = {
+        x: 150,
+        y: canvas.height - 100,
+        width: 50,
+        height: 70,
+        images: [playerImage1, playerImage2],
+        currentImageIndex: 0,
+        jumpPower: 17,
+        sprintSpeed: 6,
+        normalSpeed: 2,
+        gravity: 0.9,
+        velocityY: 0,
+        isJumping: false,
+        isSprinting: false,
+        speed: 0,
+        frameCount: 0,
+        frameInterval: 10,
+      };
+
+      const chaserEnemy = {
+        x: 50,
+        y: canvas.height - 100,
+        width: 50,
+        height: 70,
+        images: [chaserEnemyImage1, chaserEnemyImage2],
+        currentImageIndex: 0,
+        speed: 1.9,
+        jumpPower: 15,
+        gravity: 1.1,
+        velocityY: 0,
+        isJumping: false,
+        frameCount: 0,
+        frameInterval: 10,
+      };
+
+      const obstacleWidth = 30;
+      const obstacleHeight = 30;
+      const obstacleSpeed = 10;
+
+      const obstacles = [];
+
+      let score = 0;
+      let milliseconds = 0;
+      let seconds = 0;
+      let minutes = 0;
+      let timerInterval;
+      let gameRunning = true;
+
+      const parallaxSpeed = 0.2;
+      let backgroundX = 0;
+      let scenarioX = 0;
+
+      function jump(event) {
+        if (
+          (event.key === 'w' || event.key === 'ArrowUp') &&
+          !player.isJumping &&
+          gameRunning
+        ) {
+          player.velocityY = -player.jumpPower;
+          player.isJumping = true;
+        }
+      }
+
+      function sprint(event) {
+        if (event.key === 'd' || event.key === 'ArrowRight') {
+          player.isSprinting = true;
+        }
+      }
+
+      function stopSprint(event) {
+        if (event.key === 'd' || event.key === 'ArrowRight') {
+          player.isSprinting = false;
+        }
+      }
+
+      function moveLeft(event) {
+        if (
+          (event.key === 'a' || event.key === 'ArrowLeft') &&
+          gameRunning
+        ) {
+          player.speed = player.isSprinting
+            ? -player.sprintSpeed * 2
+            : -player.normalSpeed;
+        }
+      }
+
+      function moveRight(event) {
+        if (
+          (event.key === 'd' || event.key === 'ArrowRight') &&
+          gameRunning
+        ) {
+          player.speed = player.isSprinting
+            ? player.sprintSpeed
+            : player.normalSpeed;
+        }
+      }
+
+      function stopMove(event) {
+        if (
+          (event.key === 'a' || event.key === 'ArrowLeft' || event.key === 'd' || event.key === 'ArrowRight') &&
+          gameRunning
+        ) {
+          player.speed = 0;
+        }
+      }
+
+      function checkCollisions() {
+        if (
+          player.x < chaserEnemy.x + chaserEnemy.width &&
+          player.x + player.width > chaserEnemy.x &&
+          player.y < chaserEnemy.y + chaserEnemy.height &&
+          player.y + player.height > chaserEnemy.y
+        ) {
+          clearInterval(timerInterval);
+          displayModal(
+            'Você Perdeu! Pontos: ' +
+              score +
+              ', Tempo: ' +
+              seconds +
+              '.' +
+              milliseconds +
+              ' segundos'
+          );
+        }
+
+        for (let i = 0; i < obstacles.length; i++) {
+          if (
+            player.x < obstacles[i].x + obstacleWidth &&
+            player.x + player.width > obstacles[i].x &&
+            player.y < obstacles[i].y + obstacleHeight &&
+            player.y + player.height > obstacles[i].y
+          ) {
+            clearInterval(timerInterval);
+            displayModal(
+              'Você Perdeu! Pontos: ' +
+                score +
+                ', Tempo: ' +
+                seconds +
+                '.' +
+                milliseconds +
+                ' segundos'
+            );
+          }
+
+          if (
+            chaserEnemy.x < obstacles[i].x + obstacleWidth &&
+            chaserEnemy.x + chaserEnemy.width > obstacles[i].x &&
+            chaserEnemy.y < obstacles[i].y + obstacleHeight &&
+            chaserEnemy.y + chaserEnemy.height > obstacles[i].y
+          ) {
+            jumpChaserEnemy();
+          }
+        }
+      }
+
+      function spawnObstacle() {
+        const obstacle = {
+          x: canvas.width,
+          y: canvas.height - obstacleHeight,
+          width: obstacleWidth,
+          height: obstacleHeight,
+          image: obstacleImage,
+        };
+        obstacles.push(obstacle);
+      }
+
+      function resetGame() {
+        chaserEnemy.x = 50;
+        chaserEnemy.y = canvas.height - 100;
+        player.x = 150;
+        player.y = canvas.height - 100;
+        player.velocityY = 0;
+        player.isJumping = false;
+        player.isSprinting = false;
+        player.speed = 0;
+        score = 0;
+        milliseconds = 0;
+        seconds = 0;
+        clearInterval(timerInterval);
+        timerInterval = setInterval(updateTimer, 10);
+        obstacles.length = 0;
+        gameRunning = true;
+
+        backgroundX = 0;
+        scenarioX = 0;
+
+        updateGameArea();
+      }
+
+      function updateTimer() {
+        milliseconds += 10;
+        if (milliseconds >= 1000) {
+          milliseconds = 0;
+          seconds++;
+
+          if (seconds >= 60) {
+            seconds = 0;
+            minutes++;
+          }
+        }
+      }
+
+      function jumpChaserEnemy() {
+        if (!chaserEnemy.isJumping) {
+          chaserEnemy.velocityY = -chaserEnemy.jumpPower;
+          chaserEnemy.isJumping = true;
+        }
+      }
+
+      function updateGameArea() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        backgroundX -= player.speed * parallaxSpeed;
+
+        for (let x = backgroundX; x < canvas.width; x += backgroundImage1.width) {
+          ctx.drawImage(backgroundImage1, x, 0);
+        }
+
+        scenarioX -= obstacleSpeed;
+
+        for (let x = scenarioX; x < canvas.width; x += backgroundImage2.width) {
+          ctx.drawImage(backgroundImage2, x, canvas.height - backgroundImage2.height);
+        }
+
+        player.velocityY += player.gravity;
+        player.y += player.velocityY;
+        if (player.y >= canvas.height - player.height) {
+          player.y = canvas.height - player.height;
+          player.isJumping = false;
+        }
+
+        if (chaserEnemy.x > player.x) {
+          chaserEnemy.x -= chaserEnemy.speed;
+        } else if (chaserEnemy.x < player.x) {
+          chaserEnemy.x += chaserEnemy.speed;
+        }
+        if (chaserEnemy.y > player.y) {
+          chaserEnemy.y -= chaserEnemy.speed;
+        } else if (chaserEnemy.y < player.y) {
+          chaserEnemy.y += chaserEnemy.speed;
+        }
+
+        chaserEnemy.velocityY += chaserEnemy.gravity;
+        chaserEnemy.y += chaserEnemy.velocityY;
+        if (chaserEnemy.y >= canvas.height - chaserEnemy.height) {
+          chaserEnemy.y = canvas.height - chaserEnemy.height;
+          chaserEnemy.isJumping = false;
+        }
+
+        if (player.x < 0) {
+          player.x = 0;
+        } else if (player.x > canvas.width - player.width) {
+          player.x = canvas.width - player.width;
+        }
+
+        if (chaserEnemy.x < 0) {
+          chaserEnemy.x = 0;
+        } else if (chaserEnemy.x > canvas.width - chaserEnemy.width) {
+          chaserEnemy.x = canvas.width - chaserEnemy.width;
+        }
+
+        if (Math.random() < 0.01) {
+          spawnObstacle();
+        }
+
+        for (let i = 0; i < obstacles.length; i++) {
+          obstacles[i].x -= obstacleSpeed;
+          if (obstacles[i].x + obstacleWidth < 0) {
+            obstacles.splice(i, 1);
+            i--;
+            score++;
+          }
+        }
+
+        checkCollisions();
+
+        player.x += player.speed;
+
+        player.frameCount++;
+        chaserEnemy.frameCount++;
+
+        if (player.frameCount >= player.frameInterval) {
+          player.frameCount = 0;
+          player.currentImageIndex = 1 - player.currentImageIndex;
+        }
+
+        if (chaserEnemy.frameCount >= chaserEnemy.frameInterval) {
+          chaserEnemy.frameCount = 0;
+          chaserEnemy.currentImageIndex = 1 - chaserEnemy.currentImageIndex;
+        }
+
+        ctx.save();
+        if (player.speed < 0) {
+          ctx.scale(-1, 1);
+          ctx.drawImage(
+            player.images[player.currentImageIndex],
+            -player.x - player.width,
+            player.y,
+            player.width,
+            player.height
+          );
+        } else {
+          ctx.drawImage(
+            player.images[player.currentImageIndex],
+            player.x,
+            player.y,
+            player.width,
+            player.height
+          );
+        }
+        ctx.restore();
+
+        ctx.drawImage(
+          chaserEnemy.images[chaserEnemy.currentImageIndex],
+          chaserEnemy.x,
+          chaserEnemy.y,
+          chaserEnemy.width,
+          chaserEnemy.height
+        );
+
+        for (let i = 0; i < obstacles.length; i++) {
+          ctx.drawImage(
+            obstacles[i].image,
+            obstacles[i].x,
+            obstacles[i].y,
+            obstacleWidth,
+            obstacleHeight
+          );
+        }
+
+        ctx.fillStyle = 'black';
+        ctx.font = '20px PixelGameFont';
+        ctx.fillText('Pontos: ' + score, 10, 30);
+
+        ctx.fillText(
+          'Tempo: ' +
+            minutes +
+            ' minutos ' +
+            seconds +
+            '.' +
+            milliseconds +
+            ' segundos',
+          10,
+          60
+        );
+
+        if (!gameRunning) {
+          displayModal(
+            'Você Perdeu! Pontos: ' +
+              score +
+              ', Tempo: ' +
+              seconds +
+              '.' +
+              milliseconds +
+              ' segundos'
+          );
+        } else {
+          requestAnimationFrame(updateGameArea);
+        }
+      }
+
+      document.addEventListener('keydown', jump);
+      document.addEventListener('keydown', sprint);
+      document.addEventListener('keyup', stopSprint);
+      document.addEventListener('keydown', moveLeft);
+      document.addEventListener('keydown', moveRight);
+      document.addEventListener('keyup', stopMove);
+
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      resetGame();
+
+      function displayModal(message) {
+        const modal = document.getElementById('myModal');
+        const modalText = document.getElementById('modalText');
+        modalText.innerHTML = message;
+        modal.style.display = 'block';
+        gameRunning = false;
+      }
+
+      window.addEventListener('keydown', function (event) {
+        if (event.key === 'F5') {
+          const modal = document.getElementById('myModal');
+          modal.style.display = 'none';
+          resetGame();
+          updateGameArea();
+        }
+      });
+    }
+
+    loadImages().then(startGame);
+  </script>
+</body>
+</html>
