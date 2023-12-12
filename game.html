@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Salotti Run</title>
@@ -9,8 +9,6 @@
     body {
       margin: 0;
       overflow: hidden;
-
-      background-color: #BFDBF7;
     }
     canvas {
       display: block;
@@ -29,12 +27,6 @@
       font-size: 4rem;
       text-align: center;
     }
-
-    #myModal a {
-      color: #fff;
-      text-decoration: none;
-      font-size: 2rem;
-    }
   </style>
 </head>
 <body>
@@ -42,7 +34,6 @@
   <div id="myModal">
     <p id="modalText"></p>
     <p>Pressione F5 para reiniciar</p>
-    <a href="/"><b>Voltar para o menu</b></a>
   </div>
   <script>
     const canvas = document.getElementById('gameCanvas');
@@ -87,9 +78,9 @@
         height: 70,
         images: [playerImage1, playerImage2],
         currentImageIndex: 0,
-        jumpPower: 20,
+        jumpPower: 17,
         sprintSpeed: 6,
-        normalSpeed: 0.5,
+        normalSpeed: 2,
         gravity: 0.9,
         velocityY: 0,
         isJumping: false,
@@ -106,7 +97,7 @@
         height: 70,
         images: [chaserEnemyImage1, chaserEnemyImage2],
         currentImageIndex: 0,
-        speed: 0.4,
+        speed: 1.9,
         jumpPower: 15,
         gravity: 1.1,
         velocityY: 0,
@@ -197,11 +188,11 @@
           displayModal(
             'Você Perdeu! Pontos: ' +
               score +
-                ', Tempo: ' +
-                seconds +
-                '.' +
-                milliseconds +
-                ' segundos'
+              ', Tempo: ' +
+              seconds +
+              '.' +
+              milliseconds +
+              ' segundos'
           );
         }
 
@@ -430,11 +421,11 @@
           displayModal(
             'Você foi pego! Pontos:  ' +
               score +
-              ', Tempo: '
-                seconds +
-                '.' +
-                milliseconds +
-                ' segundos'
+              ', Tempo: ' +
+              seconds +
+              '.' +
+              milliseconds +
+              ' segundos'
           );
         } else {
           requestAnimationFrame(updateGameArea);
