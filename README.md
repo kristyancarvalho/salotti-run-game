@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="salotti-run-game.vercel.app">
+  <a href="https://salotti-run-game.vercel.app">
     <b>
       salotti-run-game.vercel.app
     </b>
